@@ -41,7 +41,7 @@ class Scraper:
                         collected_urls.append(url)
         return collected_urls
 
-    def collect_comments_from_article(self, article_link):
+    def load_comments_in_article(self, article_link):
         self.driver.get(article_link)
         accept_button_iframe = self.driver.find_element(By.ID, 'sp_message_iframe_804280')
         self.driver.switch_to.frame(accept_button_iframe)
@@ -63,8 +63,17 @@ class Scraper:
             if new_document_height == initial_document_height:
                 break
             initial_document_height = new_document_height
-        time.sleep(5)
-        time.sleep(5)
+
+        reply_buttons = self.driver.find_elements(By.CSS_SELECTOR, '.comment__link[data-ct-ck4="comment_hide_answers"]')
+        for button in reply_buttons:
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", button)
+            time.sleep(1)
+            button.click()
+            time.sleep(2)
+
+        page_source = self.driver.page_source
+        article_soup = BeautifulSoup(page_source, 'html.parser')
+        return article_soup
 
 
     def extract(self):
@@ -80,4 +89,4 @@ class Scraper:
 if __name__ == "__main__":
     main_url = "https://www.zeit.de/index"
     scraper = Scraper(main_url)
-    scraper.collect_comments_from_article('https://www.zeit.de/gesellschaft/zeitgeschehen/2023-08/bundeswehr-reservisten-ungediente-ausbildung')
+    print(scraper.load_comments_in_article('https://www.zeit.de/gesellschaft/zeitgeschehen/2023-08/bundeswehr-reservisten-ungediente-ausbildung').prettify())
