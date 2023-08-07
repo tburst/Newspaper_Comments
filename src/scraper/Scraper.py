@@ -132,7 +132,7 @@ class Scraper:
             comments[comment_id]["text"] = self.extract_text_from_comment(comment)
             comments[comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
             comments[comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
-            comments[comment_id]["time"] = self.extract_time_from_comment(comment)
+            comments[comment_id]["time"] = self.extract_creation_time_comment(comment)
             comments[comment_id]["type"] = "main"
             comments[comment_id]["root_id"] = None
             comments[comment_id]["article_category"] = self.extract_article_category(article_soup)
@@ -150,7 +150,7 @@ class Scraper:
                     comments[comment_id]["text"] = self.extract_text_from_comment(comment)
                     comments[comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
                     comments[comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
-                    comments[comment_id]["time"] = self.extract_time_from_comment(comment)
+                    comments[comment_id]["time"] = self.extract_creation_time_comment(comment)
                     comments[comment_id]["type"] = "reply"
                     comments[comment_id]["root_id"] = main_comment_id
                     comments[comment_id]["article_category"] = self.extract_article_category(article_soup)
