@@ -44,11 +44,12 @@ class Scraper:
 
     def load_comments_in_article(self, article_link):
         self.driver.get(article_link)
-        accept_button_iframe = self.driver.find_element(By.ID, 'sp_message_iframe_804280')
-        self.driver.switch_to.frame(accept_button_iframe)
         wait = WebDriverWait(self.driver, 10)
-        accept_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[title="AKZEPTIEREN UND WEITER"]')))
-        accept_button.click()
+        if self.first_page:
+            accept_button_iframe = self.driver.find_element(By.ID, 'sp_message_iframe_804280')
+            self.driver.switch_to.frame(accept_button_iframe)
+            accept_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[title="AKZEPTIEREN UND WEITER"]')))
+            accept_button.click()
         time.sleep(5)
         more_comments_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'svelte-13pupk0')))
         self.driver.execute_script("arguments[0].scrollIntoView(true);",more_comments_button )
