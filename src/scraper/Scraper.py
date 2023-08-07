@@ -135,6 +135,10 @@ class Scraper:
             comments[comment_id]["time"] = self.extract_time_from_comment(comment)
             comments[comment_id]["type"] = "main"
             comments[comment_id]["root_id"] = None
+            comments[comment_id]["article_category"] = self.extract_article_category(article_soup)
+            comments[comment_id]["article_title"] = self.extract_article_title(article_soup)
+            comments[comment_id]["article_time"] = self.extract_article_time(article_soup)
+            comments[comment_id]["article_keywords"] = self.extract_keywords_article(article_soup)
         article_soup = self.load_comment_replies()
         #same for replies
         for comment_stack in article_soup.find_all("div", {"class": "comment__stack"}):
@@ -149,6 +153,10 @@ class Scraper:
                     comments[comment_id]["time"] = self.extract_time_from_comment(comment)
                     comments[comment_id]["type"] = "reply"
                     comments[comment_id]["root_id"] = main_comment_id
+                    comments[comment_id]["article_category"] = self.extract_article_category(article_soup)
+                    comments[comment_id]["article_title"] = self.extract_article_title(article_soup)
+                    comments[comment_id]["article_time"] = self.extract_article_time(article_soup)
+                    comments[comment_id]["article_keywords"] = self.extract_keywords_article(article_soup)
         return comments
 
 
