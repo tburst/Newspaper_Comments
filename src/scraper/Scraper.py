@@ -86,7 +86,7 @@ class Scraper:
         comment_body = comment.find("div", {"class": "comment__body"})
         return "\n".join([paragraph.text for paragraph in comment_body.find_all("p")])
 
-    def extract_user_profil_link(selfself,comment):
+    def extract_user_profil_link(self,comment):
         comment_header = comment.find("div", {"class": "comment__header"})
         comment_user = comment_header.find("h4", {"class": "comment__name"})
         return comment_user.find("a").get("href")
