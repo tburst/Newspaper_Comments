@@ -105,10 +105,23 @@ class Scraper:
         comment_user = comment_header.find("h4", {"class": "comment__name"})
         return comment_user.find("a").text
 
-    def extract_time_from_comment(self,comment):
+    def extract_creation_time_comment(self, comment):
         comment_header = comment.find("div", {"class": "comment__header"})
         return comment_header.find("time", {"class": "comment__date"}).get("datetime")
 
+    def extract_article_category(self, article_soup):
+        return article_soup.find("span", {"class": "article-heading__kicker"}).text
+
+    def extract_article_title(self, article_soup):
+        return article_soup.find("span", {"class": "article-heading__title"}).text
+
+    def extract_article_time(self, article_soup):
+        article_metadata = article_soup.find("div", {"class": "metadata"})
+        return article_metadata.find("time").get("datetime")
+
+    def extract_keywords_article(self, article_soup):
+        keyword_list = article_soup.find("ul", {"class": "article-tags__list"}).find_all('li')
+        return [entry.text for entry in keyword_list[:len(keyword_list)-1]]
 
     def collect_comments_in_article(self, article_soup):
         comments = {}
