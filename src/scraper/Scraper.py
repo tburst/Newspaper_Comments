@@ -27,12 +27,12 @@ class Scraper:
     def load_main_page(self):
         page = urlopen(self.main_url)
         html = page.read().decode("utf-8")
-        self.soup_main_page = BeautifulSoup(html, "html.parser")
+        soup_main_page = BeautifulSoup(html, "html.parser")
+        return soup_main_page
 
-    def collect_free_articles(self):
-        self.load_main_page()
+    def collect_free_articles(self, soup_main_page):
         collected_urls = []
-        for article in self.soup_main_page.find_all("article"):
+        for article in soup_main_page.find_all("article"):
             if not article.get('data-zplus') == "zplus":
                 article_link = article.find('a', href=True)
                 if article_link.get("data-ct-label") == "link":
@@ -64,16 +64,52 @@ class Scraper:
                 break
             initial_document_height = new_document_height
 
+        page_source = self.driver.page_source
+        article_soup = BeautifulSoup(page_source, 'html.parser')
+        return article_soup
+
+    def load_comment_replies(self):
         reply_buttons = self.driver.find_elements(By.CSS_SELECTOR, '.comment__link[data-ct-ck4="comment_hide_answers"]')
         for button in reply_buttons:
             self.driver.execute_script("arguments[0].scrollIntoView(true);", button)
             time.sleep(1)
             button.click()
             time.sleep(2)
-
         page_source = self.driver.page_source
         article_soup = BeautifulSoup(page_source, 'html.parser')
         return article_soup
+
+    def collect_comments_in_article(self, article_soup):
+        comments = {}
+        #main  comments
+        for comment in article_soup.find_all("article", {"class": "comment"}):
+            #comment id
+            comment_id = int(comment.get("id").replace("cid-",""))
+            comments[comment_id] = {}
+            #comment root id
+            comment_root_id = int(comment.get("data-ct-ck5").replace("comment_root_",""))
+            comments[comment_id]["root_id"] = comment_root_id
+            #comment text
+            comment_body= comment.find("div", {"class": "comment__body"})
+            comment_text = "\n".join([paragraph.text for paragraph in comment_body.find_all("p")])
+            comments[comment_id]["text"] = comment_text
+            #comment meta
+            comment_header = comment.find("div", {"class": "comment__header"})
+            #user info
+            comment_user = comment_header.find("h4",{"class": "comment__name"})
+            user_profil_link = comment_user.find("a").get("href")
+            comments[comment_id]["user_profil_link"] = user_profil_link
+            user_name = comment_user.find("a").text
+            comments[comment_id]["user_name"] = user_name
+            #time
+            comment_time = comment_header.find("time", {"class": "comment__date"}).get("datetime")
+            comments[comment_id]["time"] = comment_time
+
+        article_soup = self.load_comment_replies()
+        for comment_stack in article_soup.find_all("div", {"class": "comment__stack"}):
+
+        return comments
+
 
 
     def extract(self):
@@ -89,4 +125,5 @@ class Scraper:
 if __name__ == "__main__":
     main_url = "https://www.zeit.de/index"
     scraper = Scraper(main_url)
-    print(scraper.load_comments_in_article('https://www.zeit.de/gesellschaft/zeitgeschehen/2023-08/bundeswehr-reservisten-ungediente-ausbildung').prettify())
+    article_soup = scraper.load_comments_in_article('https://www.zeit.de/sport/2023-08/fussball-wm-frauen-achtelfinale-schweden-usa')
+    print(scraper.collect_comments_in_article(article_soup))
