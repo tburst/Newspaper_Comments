@@ -16,6 +16,7 @@ class Scraper:
                            "https://angebot","https://www.zeit.de/video/","https://zeitreisen.zeit.de/",
                            "https://www.zeit.de/newsletter/"]
         self.driver = self.setup_selenium_browser()
+        self.first_page = True
 
 
     def setup_selenium_browser(self):
@@ -133,5 +134,18 @@ class Scraper:
 if __name__ == "__main__":
     main_url = "https://www.zeit.de/index"
     scraper = Scraper(main_url)
-    article_soup = scraper.load_comments_in_article('https://www.zeit.de/sport/2023-08/fussball-wm-frauen-achtelfinale-schweden-usa')
-    print(scraper.collect_comments_in_article(article_soup))
+    main_page_soup = scraper.load_main_page()
+    url_list = scraper.collect_free_articles(main_page_soup)
+    print(len(url_list))
+    for url in url_list:
+        article_soup = scraper.load_comments_in_article(url)
+        comments = scraper.collect_comments_in_article(article_soup)
+        print(comments)
+        comments_df = pd.DataFrame.from_dict(comments, orient='index')
+        if not comments_df.empty:
+            comments_df["article_url"] = url
+            timestamp = int(round(datetime.now().timestamp()))
+            comments_df.to_csv(f"data/{timestamp}.csv")
+        scraper.first_page = False
+        time.sleep(5)
+
