@@ -79,47 +79,55 @@ class Scraper:
         article_soup = BeautifulSoup(page_source, 'html.parser')
         return article_soup
 
+    def extract_id_from_comment(self, comment):
+        return int(comment.get("id").replace("cid-", ""))
+
+    def extract_text_from_comment(self, comment):
+        comment_body = comment.find("div", {"class": "comment__body"})
+        return "\n".join([paragraph.text for paragraph in comment_body.find_all("p")])
+
+    def extract_user_profil_link(selfself,comment):
+        comment_header = comment.find("div", {"class": "comment__header"})
+        comment_user = comment_header.find("h4", {"class": "comment__name"})
+        return comment_user.find("a").get("href")
+
+    def extract_user_name_from_comment(self, comment):
+        comment_header = comment.find("div", {"class": "comment__header"})
+        comment_user = comment_header.find("h4", {"class": "comment__name"})
+        return comment_user.find("a").text
+
+    def extract_time_from_comment(self,comment):
+        comment_header = comment.find("div", {"class": "comment__header"})
+        return comment_header.find("time", {"class": "comment__date"}).get("datetime")
+
+
     def collect_comments_in_article(self, article_soup):
         comments = {}
         #main  comments
         for comment in article_soup.find_all("article", {"class": "comment"}):
-            #comment id
-            comment_id = int(comment.get("id").replace("cid-",""))
+            comment_id = self.extract_id_from_comment(comment)
             comments[comment_id] = {}
-            #comment root id
-            comment_root_id = int(comment.get("data-ct-ck5").replace("comment_root_",""))
-            comments[comment_id]["root_id"] = comment_root_id
-            #comment text
-            comment_body= comment.find("div", {"class": "comment__body"})
-            comment_text = "\n".join([paragraph.text for paragraph in comment_body.find_all("p")])
-            comments[comment_id]["text"] = comment_text
-            #comment meta
-            comment_header = comment.find("div", {"class": "comment__header"})
-            #user info
-            comment_user = comment_header.find("h4",{"class": "comment__name"})
-            user_profil_link = comment_user.find("a").get("href")
-            comments[comment_id]["user_profil_link"] = user_profil_link
-            user_name = comment_user.find("a").text
-            comments[comment_id]["user_name"] = user_name
-            #time
-            comment_time = comment_header.find("time", {"class": "comment__date"}).get("datetime")
-            comments[comment_id]["time"] = comment_time
-
+            comments[comment_id]["text"] = self.extract_text_from_comment(comment)
+            comments[comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
+            comments[comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
+            comments[comment_id]["time"] = self.extract_time_from_comment(comment)
+            comments[comment_id]["type"] = "main"
+            comments[comment_id]["root_id"] = None
         article_soup = self.load_comment_replies()
+        #same for replies
         for comment_stack in article_soup.find_all("div", {"class": "comment__stack"}):
-
+            for index, comment in enumerate(comment_stack.find_all("article", {"class": "comment"})):
+                if index == 0:
+                    main_comment_id = self.extract_id_from_comment(comment)
+                else:
+                    comments[comment_id] = {}
+                    comments[comment_id]["text"] = self.extract_text_from_comment(comment)
+                    comments[comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
+                    comments[comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
+                    comments[comment_id]["time"] = self.extract_time_from_comment(comment)
+                    comments[comment_id]["type"] = "reply"
+                    comments[comment_id]["root_id"] = main_comment_id
         return comments
-
-
-
-    def extract(self):
-        pass
-
-    def classify(self):
-        pass
-
-    def save(self):
-        pass
 
 
 if __name__ == "__main__":
