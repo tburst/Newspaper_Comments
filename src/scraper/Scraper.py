@@ -6,6 +6,9 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 import time
+from datetime import datetime
+import pandas as pd
+from selenium.common.exceptions import TimeoutException
 
 
 class Scraper:
@@ -51,9 +54,13 @@ class Scraper:
             accept_button = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[title="AKZEPTIEREN UND WEITER"]')))
             accept_button.click()
         time.sleep(5)
-        more_comments_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'svelte-13pupk0')))
-        self.driver.execute_script("arguments[0].scrollIntoView(true);",more_comments_button )
-        self.driver.execute_script("arguments[0].click();", more_comments_button )
+        try:
+            more_comments_button = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'svelte-13pupk0')))
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", more_comments_button)
+            self.driver.execute_script("arguments[0].click();", more_comments_button)
+        except TimeoutException:
+            print("no more comments button")
+
 
         initial_document_height = self.driver.execute_script("return document.body.scrollHeight")
         count_scroll = 0
