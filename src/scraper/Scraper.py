@@ -110,7 +110,12 @@ class Scraper:
         return comment_header.find("time", {"class": "comment__date"}).get("datetime")
 
     def extract_article_category(self, article_soup):
-        return article_soup.find("span", {"class": "article-heading__kicker"}).text
+        try:
+            return article_soup.find("span", {"class": "article-heading__kicker"}).text
+        except AttributeError:
+            return article_soup.find("span", {"class": "column-heading__kicker"}).text
+
+
 
     def extract_article_title(self, article_soup):
         return article_soup.find("span", {"class": "article-heading__title"}).text
