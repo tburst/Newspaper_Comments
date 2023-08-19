@@ -117,7 +117,8 @@ class Scraper:
             "article-heading__kicker",
             "column-heading__kicker",
             "column-header__kicker",
-            "headline__supertitle"]
+            "headline__supertitle",
+            "article-header__kicker"]
         for class_name in classes_to_try:
             result = article_soup.find("span", {"class": class_name})
             if result:
@@ -129,7 +130,9 @@ class Scraper:
             "article-heading__title",
             "column-heading__title",
             "column-header__title",
-            "headline__title"]
+            "headline__title",
+            "article-header",
+            "article-header__title"]
         for class_name in classes_to_try:
             result = article_soup.find("span", {"class": class_name})
             if result:
@@ -138,8 +141,15 @@ class Scraper:
 
 
     def extract_article_time(self, article_soup):
-        article_metadata = article_soup.find("div", {"class": "metadata"})
-        return article_metadata.find("time").get("datetime")
+        classes_to_try = [
+            "metadata",
+            "meta",
+            "article-header__metadata"]
+        for class_name in classes_to_try:
+            result = article_soup.find("div", {"class": class_name})
+            if result:
+                return result.find("time").get("datetime")
+        return None
 
     def extract_keywords_article(self, article_soup):
         keyword_list = article_soup.find("ul", {"class": "article-tags__list"}).find_all('li')
