@@ -97,12 +97,16 @@ class Scraper:
     def extract_user_profil_link(self,comment):
         comment_header = comment.find("div", {"class": "comment__header"})
         comment_user = comment_header.find("h4", {"class": "comment__name"})
-        return comment_user.find("a").get("href")
+        if comment_user.find("a"):
+            return comment_user.find("a").get("href")
+        return ""
 
     def extract_user_name_from_comment(self, comment):
         comment_header = comment.find("div", {"class": "comment__header"})
         comment_user = comment_header.find("h4", {"class": "comment__name"})
-        return comment_user.find("a").text
+        if comment_user.find("a"):
+            return comment_user.find("a").text
+        return ""
 
     def extract_creation_time_comment(self, comment):
         comment_header = comment.find("div", {"class": "comment__header"})
