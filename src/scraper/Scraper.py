@@ -16,7 +16,7 @@ class Scraper:
         self.ignore_url = ["https://www.zeit.de/wochenende","https://verlag.zeit.de/",
                            "https://spiele.zeit.de/", "https://www.wiwo.de/",
                            "https://angebot","https://www.zeit.de/video/","https://zeitreisen.zeit.de/",
-                           "https://www.zeit.de/newsletter/"]
+                           "https://www.zeit.de/newsletter/","https://z2x.zeit.de"]
         self.driver = self.setup_selenium_browser()
         self.first_page = True
 
