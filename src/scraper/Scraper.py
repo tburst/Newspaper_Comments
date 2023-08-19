@@ -4,11 +4,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.keys import Keys
 import time
 from datetime import datetime
-import pandas as pd
 from selenium.common.exceptions import TimeoutException
+import json
 
 
 class Scraper:
@@ -110,15 +109,29 @@ class Scraper:
         return comment_header.find("time", {"class": "comment__date"}).get("datetime")
 
     def extract_article_category(self, article_soup):
-        try:
-            return article_soup.find("span", {"class": "article-heading__kicker"}).text
-        except AttributeError:
-            return article_soup.find("span", {"class": "column-heading__kicker"}).text
-
-
+        classes_to_try = [
+            "article-heading__kicker",
+            "column-heading__kicker",
+            "column-header__kicker",
+            "headline__supertitle"]
+        for class_name in classes_to_try:
+            result = article_soup.find("span", {"class": class_name})
+            if result:
+                return result.text
+        return None
 
     def extract_article_title(self, article_soup):
-        return article_soup.find("span", {"class": "article-heading__title"}).text
+        classes_to_try = [
+            "article-heading__title",
+            "column-heading__title",
+            "column-header__title",
+            "headline__title"]
+        for class_name in classes_to_try:
+            result = article_soup.find("span", {"class": class_name})
+            if result:
+                return result.text
+        return None
+
 
     def extract_article_time(self, article_soup):
         article_metadata = article_soup.find("div", {"class": "metadata"})
@@ -129,7 +142,10 @@ class Scraper:
         return [entry.text for entry in keyword_list[:len(keyword_list)-1]]
 
     def collect_comments_in_article(self, article_soup):
-        comments = {}
+        comments = {"article_category" : self.extract_article_category(article_soup),
+                    "article_title": self.extract_article_title(article_soup),
+                    "article_time": self.extract_article_time(article_soup),
+                    "article_keywords": self.extract_keywords_article(article_soup)}
         #main  comments
         for comment in article_soup.find_all("article", {"class": "comment"}):
             comment_id = self.extract_id_from_comment(comment)
@@ -140,10 +156,6 @@ class Scraper:
             comments[comment_id]["time"] = self.extract_creation_time_comment(comment)
             comments[comment_id]["type"] = "main"
             comments[comment_id]["root_id"] = None
-            comments[comment_id]["article_category"] = self.extract_article_category(article_soup)
-            comments[comment_id]["article_title"] = self.extract_article_title(article_soup)
-            comments[comment_id]["article_time"] = self.extract_article_time(article_soup)
-            comments[comment_id]["article_keywords"] = self.extract_keywords_article(article_soup)
         article_soup = self.load_comment_replies()
         #same for replies
         for comment_stack in article_soup.find_all("div", {"class": "comment__stack"}):
@@ -158,14 +170,11 @@ class Scraper:
                     comments[comment_id]["time"] = self.extract_creation_time_comment(comment)
                     comments[comment_id]["type"] = "reply"
                     comments[comment_id]["root_id"] = main_comment_id
-                    comments[comment_id]["article_category"] = self.extract_article_category(article_soup)
-                    comments[comment_id]["article_title"] = self.extract_article_title(article_soup)
-                    comments[comment_id]["article_time"] = self.extract_article_time(article_soup)
-                    comments[comment_id]["article_keywords"] = self.extract_keywords_article(article_soup)
         return comments
 
 
 if __name__ == "__main__":
+
     main_url = "https://www.zeit.de/index"
     scraper = Scraper(main_url)
     main_page_soup = scraper.load_main_page()
@@ -174,12 +183,11 @@ if __name__ == "__main__":
     for url in url_list:
         article_soup = scraper.load_comments_in_article(url)
         comments = scraper.collect_comments_in_article(article_soup)
+        comments["article_url"] = url
+        timestamp = int(round(datetime.now().timestamp()))
         print(comments)
-        comments_df = pd.DataFrame.from_dict(comments, orient='index')
-        if not comments_df.empty:
-            comments_df["article_url"] = url
-            timestamp = int(round(datetime.now().timestamp()))
-            comments_df.to_csv(f"data/{timestamp}.csv")
+        with open(f"../../data/raw_data/{timestamp}.json", "w") as outfile:
+            json.dump(comments, outfile)
         scraper.first_page = False
         time.sleep(5)
 
