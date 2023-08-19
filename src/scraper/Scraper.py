@@ -159,17 +159,18 @@ class Scraper:
         comments = {"article_category" : self.extract_article_category(article_soup),
                     "article_title": self.extract_article_title(article_soup),
                     "article_time": self.extract_article_time(article_soup),
-                    "article_keywords": self.extract_keywords_article(article_soup)}
+                    "article_keywords": self.extract_keywords_article(article_soup),
+                    "comments": {}}
         #main  comments
         for comment in article_soup.find_all("article", {"class": "comment"}):
             comment_id = self.extract_id_from_comment(comment)
-            comments[comment_id] = {}
-            comments[comment_id]["text"] = self.extract_text_from_comment(comment)
-            comments[comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
-            comments[comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
-            comments[comment_id]["time"] = self.extract_creation_time_comment(comment)
-            comments[comment_id]["type"] = "main"
-            comments[comment_id]["root_id"] = None
+            comments["comments"][comment_id] = {}
+            comments["comments"][comment_id]["text"] = self.extract_text_from_comment(comment)
+            comments["comments"][comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
+            comments["comments"][comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
+            comments["comments"][comment_id]["time"] = self.extract_creation_time_comment(comment)
+            comments["comments"][comment_id]["type"] = "main"
+            comments["comments"][comment_id]["root_id"] = None
         article_soup = self.load_comment_replies()
         #same for replies
         for comment_stack in article_soup.find_all("div", {"class": "comment__stack"}):
@@ -177,13 +178,13 @@ class Scraper:
                 if index == 0:
                     main_comment_id = self.extract_id_from_comment(comment)
                 else:
-                    comments[comment_id] = {}
-                    comments[comment_id]["text"] = self.extract_text_from_comment(comment)
-                    comments[comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
-                    comments[comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
-                    comments[comment_id]["time"] = self.extract_creation_time_comment(comment)
-                    comments[comment_id]["type"] = "reply"
-                    comments[comment_id]["root_id"] = main_comment_id
+                    comments["comments"][comment_id] = {}
+                    comments["comments"][comment_id]["text"] = self.extract_text_from_comment(comment)
+                    comments["comments"][comment_id]["user_profil_link"] = self.extract_user_profil_link(comment)
+                    comments["comments"][comment_id]["user_name"] = self.extract_user_name_from_comment(comment)
+                    comments["comments"][comment_id]["time"] = self.extract_creation_time_comment(comment)
+                    comments["comments"][comment_id]["type"] = "reply"
+                    comments["comments"][comment_id]["root_id"] = main_comment_id
         return comments
 
 
@@ -195,6 +196,7 @@ if __name__ == "__main__":
     url_list = scraper.collect_free_articles(main_page_soup)
     print(len(url_list))
     for url in url_list:
+        print(url)
         article_soup = scraper.load_comments_in_article(url)
         comments = scraper.collect_comments_in_article(article_soup)
         comments["article_url"] = url
