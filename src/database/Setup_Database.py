@@ -40,22 +40,21 @@ CREATE TABLE IF NOT EXISTS comment_schema.users (
 
 create_article_table = '''
 CREATE TABLE IF NOT EXISTS comment_schema.articles (
-    article_id INTEGER PRIMARY KEY,
+    article_id SERIAL PRIMARY KEY,
     created TIMESTAMP NOT NULL,
-    article_link TEXT NOT NULL,
-    keywords TEXT);
+    article_link TEXT NOT NULL UNIQUE);
 '''
 
 create_keyword_table = '''
-CREATE TABLE comment_schema.keywords (
+CREATE TABLE IF NOT EXISTS comment_schema.keywords (
     keyword_id SERIAL PRIMARY KEY,
-    keyword VARCHAR(255) NOT NULL,
+    keyword TEXT NOT NULL,
     UNIQUE(keyword)
 );
 '''
 
 create_keyword_article_matching_table = '''
-CREATE TABLE comment_schema.article_keywords (
+CREATE TABLE IF NOT EXISTS comment_schema.article_keywords (
     article_id INTEGER REFERENCES comment_schema.articles(article_id),
     keyword_id INTEGER REFERENCES comment_schema.keywords(keyword_id),
     PRIMARY KEY (article_id, keyword_id)
