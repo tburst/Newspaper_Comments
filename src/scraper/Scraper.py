@@ -37,7 +37,7 @@ class Scraper:
     def collect_free_articles(self, soup_main_page):
         collected_urls = []
         for article in soup_main_page.find_all("article"):
-            if not article.get('data-zplus') == "zplus":
+            if not article.get('data-zplus') in ["zplus", "zplus-register"]:
                 article_link = article.find('a', href=True)
                 if article_link.get("data-ct-label") == "link":
                     url = article_link["href"]
