@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 from selenium.common.exceptions import TimeoutException
 import json
+from google.cloud import storage
 
 
 class Scraper:
@@ -188,13 +189,28 @@ class Scraper:
         return comments
 
 
+def write_to_google_cloud_storage(bucket_name, json_dict):
+    storage_client = storage.Client.from_service_account_json("../../secrets/service_key.json")
+    bucket = storage_client.bucket(bucket_name)
+    timestamp = int(round(datetime.now().timestamp()))
+    blob = bucket.blob(f"{timestamp}.json")
+    blob.upload_from_string(
+        data=json.dumps(json_dict),
+        content_type='application/json'
+        )
+    result = f"{timestamp}.json" + " upload complete"
+    return {'response' : result}
+
+
 if __name__ == "__main__":
 
     main_url = "https://www.zeit.de/index"
     scraper = Scraper(main_url)
     main_page_soup = scraper.load_main_page()
     url_list = scraper.collect_free_articles(main_page_soup)
-    print(len(url_list))
+    file_object = open(f"../../Config.json", "r")
+    config_settings = json.load(file_object)
+    bucket_name = config_settings["bucket_name"]
     for url in url_list:
         print(url)
         article_soup = scraper.load_comments_in_article(url)
@@ -202,8 +218,9 @@ if __name__ == "__main__":
         comments["article_url"] = url
         timestamp = int(round(datetime.now().timestamp()))
         print(comments)
-        with open(f"../../data/raw_data/{timestamp}.json", "w") as outfile:
-            json.dump(comments, outfile)
+        #with open(f"../../data/raw_data/{timestamp}.json", "w") as outfile:
+            #json.dump(comments, outfile)
+        write_to_google_cloud_storage(bucket_name, comments)
         scraper.first_page = False
         time.sleep(5)
 
