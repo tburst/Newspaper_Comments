@@ -17,14 +17,19 @@ class Scraper:
         self.ignore_url = ["https://www.zeit.de/wochenende","https://verlag.zeit.de/",
                            "https://spiele.zeit.de/", "https://www.wiwo.de/",
                            "https://angebot","https://www.zeit.de/video/","https://zeitreisen.zeit.de/",
-                           "https://www.zeit.de/newsletter/","https://z2x.zeit.de"]
+                           "https://www.zeit.de/newsletter/","https://z2x.zeit.de",
+                           "ukraine-krieg-russland-newsblog-live", "https://freundederzeit"]
         self.driver = self.setup_selenium_browser()
         self.first_page = True
 
 
     def setup_selenium_browser(self):
         options = webdriver.ChromeOptions()
-        #options.add_argument('--headless')
+        options.add_argument('--headless')
+        options.add_argument("--disable-gpu")
+        options.add_argument("window-size=1024,768")
+        options.add_argument("--no-sandbox")
+        options.add_argument('--disable-dev-shm-usage')
         driver = webdriver.Chrome(options=options)
         return driver
 
@@ -190,7 +195,7 @@ class Scraper:
 
 
 def write_to_google_cloud_storage(bucket_name, json_dict):
-    storage_client = storage.Client.from_service_account_json("../../secrets/service_key.json")
+    storage_client = storage.Client.from_service_account_json("src/scraper/secrets/service_key.json")
     bucket = storage_client.bucket(bucket_name)
     timestamp = int(round(datetime.now().timestamp()))
     blob = bucket.blob(f"{timestamp}.json")
@@ -208,18 +213,21 @@ if __name__ == "__main__":
     scraper = Scraper(main_url)
     main_page_soup = scraper.load_main_page()
     url_list = scraper.collect_free_articles(main_page_soup)
-    file_object = open(f"../../Config.json", "r")
+    url_list = list(dict.fromkeys(url_list)) # remove duplicates
+    file_object = open(f"src/scraper/Config.json", "r")
     config_settings = json.load(file_object)
     bucket_name = config_settings["bucket_name"]
     for url in url_list:
         print(url)
-        article_soup = scraper.load_comments_in_article(url)
-        comments = scraper.collect_comments_in_article(article_soup)
+        try:
+            article_soup = scraper.load_comments_in_article(url)
+            comments = scraper.collect_comments_in_article(article_soup)
+        except Exception as e:
+            print(e)
+            continue
         comments["article_url"] = url
         timestamp = int(round(datetime.now().timestamp()))
         print(comments)
-        #with open(f"../../data/raw_data/{timestamp}.json", "w") as outfile:
-            #json.dump(comments, outfile)
         write_to_google_cloud_storage(bucket_name, comments)
         scraper.first_page = False
         time.sleep(5)
